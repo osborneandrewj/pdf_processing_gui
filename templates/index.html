@@ -414,6 +414,12 @@
                         this.downloadPath = result.download_path;
                         this.downloadBtn.href = `/download/${encodeURIComponent(result.download_path)}`;
                         this.downloadBtn.style.display = 'inline-block';
+                        
+                        // Debug: Show field names in console
+                        if (result.debug_fields) {
+                            console.log('PDF Field Names Found:', result.debug_fields);
+                        }
+                        
                         this.showStatus('✅ PDF processed successfully!', 'success');
                     } else {
                         this.showStatus('❌ Error: ' + result.error, 'error');
