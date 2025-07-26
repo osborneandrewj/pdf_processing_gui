@@ -190,6 +190,23 @@
             display: none;
         }
 
+        .debug-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .debug-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
         .output-preview {
             background: #f5f5f5;
             border-radius: 10px;
@@ -295,6 +312,10 @@
         <button class="clear-btn" id="clearBtn">Clear</button>
         
         <div class="output-section" id="outputSection">
+            <div class="debug-section" id="debugSection">
+                <div class="debug-title">📋 PDF Field Names Found:</div>
+                <div id="debugContent"></div>
+            </div>
             <h3>Output Preview:</h3>
             <div class="output-preview" id="outputPreview"></div>
             <a class="download-btn" id="downloadBtn" style="display: none;">📥 Download Text File</a>
@@ -324,6 +345,8 @@
                 this.downloadBtn = document.getElementById('downloadBtn');
                 this.progress = document.getElementById('progress');
                 this.progressBar = document.getElementById('progressBar');
+                this.debugSection = document.getElementById('debugSection');
+                this.debugContent = document.getElementById('debugContent');
             }
 
             attachEventListeners() {
@@ -415,9 +438,9 @@
                         this.downloadBtn.href = `/download/${encodeURIComponent(result.download_path)}`;
                         this.downloadBtn.style.display = 'inline-block';
                         
-                        // Debug: Show field names in console
+                        // Show debug field names
                         if (result.debug_fields) {
-                            console.log('PDF Field Names Found:', result.debug_fields);
+                            this.showDebugFields(result.debug_fields);
                         }
                         
                         this.showStatus('✅ PDF processed successfully!', 'success');
@@ -437,6 +460,15 @@
                 this.outputSection.style.display = 'block';
             }
 
+            showDebugFields(fields) {
+                let debugHtml = '';
+                for (const [key, value] of Object.entries(fields)) {
+                    debugHtml += `<div><strong>"${key}"</strong>: "${value}"</div>`;
+                }
+                this.debugContent.innerHTML = debugHtml;
+                this.debugSection.style.display = 'block';
+            }
+
             clearSelection() {
                 this.selectedFile = null;
                 this.downloadPath = null;
@@ -446,6 +478,7 @@
                 this.clearBtn.style.display = 'none';
                 this.outputSection.style.display = 'none';
                 this.downloadBtn.style.display = 'none';
+                this.debugSection.style.display = 'none';
                 this.hideStatus();
                 this.hideProgress();
             }
