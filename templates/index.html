@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Form Processor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .title {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 40px;
+        }
+
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+            background: rgba(102, 126, 234, 0.05);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+
+        .drop-zone-content {
+            pointer-events: none;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+            transition: color 0.3s ease;
+        }
+
+        .drop-zone:hover .upload-icon {
+            color: #764ba2;
+        }
+
+        .drop-text {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .drop-subtext {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .selected-file {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .file-name {
+            color: #2e7d32;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .process-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            display: none;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .process-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .clear-btn {
+            background: transparent;
+            color: #666;
+            border: 2px solid #ddd;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 10px;
+            display: none;
+        }
+
+        .clear-btn:hover {
+            border-color: #999;
+            color: #333;
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 2px solid #4caf50;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 2px solid #f44336;
+        }
+
+        .status.processing {
+            background: #fff3e0;
+            color: #ef6c00;
+            border: 2px solid #ff9800;
+        }
+
+        .output-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .output-preview {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+
+        .download-btn {
+            background: linear-gradient(45deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .progress {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            display: none;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: indeterminate 1.5s infinite linear;
+        }
+
+        @keyframes indeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">PDF Form Processor</h1>
+        <p class="subtitle">Convert PDF forms to formatted window orders</p>
+        
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-content">
+                <div class="upload-icon">📄</div>
+                <div class="drop-text">Drop PDF file here</div>
+                <div class="drop-subtext">or click to browse (max 16MB)</div>
+            </div>
+        </div>
+        
+        <input type="file" id="fileInput" class="file-input" accept=".pdf">
+        
+        <div class="selected-file" id="selectedFile">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+        
+        <div class="progress" id="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <button class="process-btn" id="processBtn">Process PDF</button>
+        <button class="clear-btn" id="clearBtn">Clear</button>
+        
+        <div class="output-section" id="outputSection">
+            <h3>Output Preview:</h3>
+            <div class="output-preview" id="outputPreview"></div>
+            <a class="download-btn" id="downloadBtn" style="display: none;">📥 Download Text File</a>
+        </div>
+    </div>
+
+    <script>
+        class PDFProcessor {
+            constructor() {
+                this.selectedFile = null;
+                this.downloadPath = null;
+                this.initializeElements();
+                this.attachEventListeners();
+            }
+
+            initializeElements() {
+                this.dropZone = document.getElementById('dropZone');
+                this.fileInput = document.getElementById('fileInput');
+                this.selectedFileDiv = document.getElementById('selectedFile');
+                this.fileName = document.getElementById('fileName');
+                this.fileSize = document.getElementById('fileSize');
+                this.processBtn = document.getElementById('processBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.status = document.getElementById('status');
+                this.outputSection = document.getElementById('outputSection');
+                this.outputPreview = document.getElementById('outputPreview');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.progress = document.getElementById('progress');
+                this.progressBar = document.getElementById('progressBar');
+            }
+
+            attachEventListeners() {
+                this.dropZone.addEventListener('click', () => this.fileInput.click());
+                this.dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
+                this.dropZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                this.dropZone.addEventListener('drop', this.handleDrop.bind(this));
+                this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+                this.processBtn.addEventListener('click', this.processFile.bind(this));
+                this.clearBtn.addEventListener('click', this.clearSelection.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                this.dropZone.classList.add('drag-over');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                this.dropZone.classList.remove('drag-over');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                this.dropZone.classList.remove('drag-over');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.selectFile(files[0]);
+                }
+            }
+
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    this.selectFile(file);
+                }
+            }
+
+            selectFile(file) {
+                if (!file.type.includes('pdf')) {
+                    this.showStatus('Please select a PDF file', 'error');
+                    return;
+                }
+
+                if (file.size > 16 * 1024 * 1024) {
+                    this.showStatus('File size must be less than 16MB', 'error');
+                    return;
+                }
+
+                this.selectedFile = file;
+                this.fileName.textContent = file.name;
+                this.fileSize.textContent = this.formatFileSize(file.size);
+                
+                this.selectedFileDiv.style.display = 'block';
+                this.processBtn.style.display = 'inline-block';
+                this.clearBtn.style.display = 'inline-block';
+                this.hideStatus();
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            async processFile() {
+                if (!this.selectedFile) return;
+
+                this.showProgress();
+                this.showStatus('<div class="spinner"></div>Processing PDF...', 'processing');
+                this.processBtn.disabled = true;
+                
+                const formData = new FormData();
+                formData.append('file', this.selectedFile);
+
+                try {
+                    const response = await fetch('/process', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showOutput(result.output);
+                        this.downloadPath = result.download_path;
+                        this.downloadBtn.href = `/download/${encodeURIComponent(result.download_path)}`;
+                        this.downloadBtn.style.display = 'inline-block';
+                        this.showStatus('✅ PDF processed successfully!', 'success');
+                    } else {
+                        this.showStatus('❌ Error: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showStatus('❌ Network error: ' + error.message, 'error');
+                } finally {
+                    this.hideProgress();
+                    this.processBtn.disabled = false;
+                }
+            }
+
+            showOutput(content) {
+                this.outputPreview.textContent = content;
+                this.outputSection.style.display = 'block';
+            }
+
+            clearSelection() {
+                this.selectedFile = null;
+                this.downloadPath = null;
+                this.fileInput.value = '';
+                this.selectedFileDiv.style.display = 'none';
+                this.processBtn.style.display = 'none';
+                this.clearBtn.style.display = 'none';
+                this.outputSection.style.display = 'none';
+                this.downloadBtn.style.display = 'none';
+                this.hideStatus();
+                this.hideProgress();
+            }
+
+            showStatus(message, type) {
+                this.status.innerHTML = message;
+                this.status.className = `status ${type}`;
+                this.status.style.display = 'block';
+            }
+
+            hideStatus() {
+                this.status.style.display = 'none';
+            }
+
+            showProgress() {
+                this.progress.style.display = 'block';
+            }
+
+            hideProgress() {
+                this.progress.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new PDFProcessor();
+        });
+    </script>
+</body>
+</html>

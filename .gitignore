@@ -1,0 +1,14 @@
+# Ignore folders
+ocr_utils/
+output/
+test_pdfs/
+
+# Ignore test GUI script
+test_gui.py
+
+# Ignore Python virtual environment
+venv/
+
+# Bytecode and cache files
+__pycache__/
+*.py[cod]
